@@ -10,7 +10,7 @@ from exp.exp_classification import Exp_Classification
 import random
 import numpy as np
 
-def load_config_from_file(config_path="short_term_forecast_btc/config.yaml"):
+def load_config_from_file(config_path="config.yaml"):
     """Load hyperparameters from a YAML configuration file."""
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)

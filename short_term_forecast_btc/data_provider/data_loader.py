@@ -290,6 +290,7 @@ class Dataset_Custom(Dataset):
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
 
+
 class BTC_Dataset(Dataset):
     def __init__(self, root_path, flag='train', size=None,
                  features=['Price', 'Change', 'SMA'], data_path='btc_data.csv',
@@ -362,7 +363,6 @@ class BTC_Dataset(Dataset):
         insample_window = self.data[-self.seq_len:]  # Last window of data
         insample[0, :, :] = insample_window  # Fill insample with the last sequence
         return insample
-
 
 
 class Dataset_M4(Dataset):
@@ -736,7 +736,7 @@ class UEAloader(Dataset):
 
     def load_single(self, filepath):
         df, labels = load_from_tsfile_to_dataframe(filepath, return_separate_X_and_y=True,
-                                                             replace_missing_vals_with='NaN')
+                                                   replace_missing_vals_with='NaN')
         labels = pd.Series(labels, dtype="category")
         self.class_names = labels.cat.categories
         labels_df = pd.DataFrame(labels.cat.codes,
@@ -782,7 +782,7 @@ class UEAloader(Dataset):
 
     def __getitem__(self, ind):
         return self.instance_norm(torch.from_numpy(self.feature_df.loc[self.all_IDs[ind]].values)), \
-               torch.from_numpy(self.labels_df.loc[self.all_IDs[ind]].values)
+            torch.from_numpy(self.labels_df.loc[self.all_IDs[ind]].values)
 
     def __len__(self):
         return len(self.all_IDs)
