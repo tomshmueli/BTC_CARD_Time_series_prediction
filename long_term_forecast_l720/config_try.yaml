@@ -1,0 +1,63 @@
+# Task settings
+task_name: long_term_forecast
+is_training: 1
+model_id: ETTh1
+model: CARD
+
+# Data loader section for ETT1
+root_path: './dataset/'
+data_path: 'ETTh1.csv'
+data: ETTh1
+features: M
+target: OT  # Assuming OT is the target feature in the dataset
+freq: h
+checkpoints: './checkpoints/'
+
+# Forecasting parameters
+seq_len: 720
+label_len: 96
+pred_len: 96  # You can change to 96, 192, 336, 720 depending on the run
+
+# Model architecture
+enc_in: 7
+d_model: 16
+n_heads: 2
+e_layers: 2
+d_ff: 32
+dropout: 0.3
+fc_dropout: 0.3
+head_dropout: 0.0
+patch_len: 16
+stride: 8
+embed_type: 0
+output_attention: False
+
+# Optimization settings
+train_epochs: 100
+batch_size: 32
+patience: 10
+learning_rate: 0.0001
+momentum: 0.1
+lradj: 'CARD'
+warmup_epochs: 30
+itr: 1
+factor: 1
+embed: 'timeF'
+distil: True
+des: 'Test'
+use_statistic: False
+dp_rank: 8
+merge_size: 2
+alpha: 0.5
+beta: 0.5
+num_workers: 10
+use_amp: False
+
+# GPU settings
+use_gpu: True
+gpu: 0
+use_multi_gpu: False
+devices: '0'
+
+# Additional parameters
+random_seed: 2021
