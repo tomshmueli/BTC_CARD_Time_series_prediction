@@ -51,8 +51,8 @@ output_attention: False
 # Optimization settings
 num_workers: 10
 itr: 1
-train_epochs: 100
-batch_size: 128
+train_epochs: 30
+batch_size: 32
 patience: 10 # Early stopping patience
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
