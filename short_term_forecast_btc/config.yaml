@@ -8,10 +8,11 @@ data: btc                   # Use 'btc' dataset
 root_path: './dataset/btc/'  # Path to your Bitcoin dataset directory
 data_path: 'btc_train.csv'   # Specify your Bitcoin train CSV file
 test_data_path: 'btc_test.csv' # Specify your Bitcoin test CSV file
-features: M                  # Multivariate features (Close, Volume, SMA)
+features: ['Price', 'Volume']                  # Multivariate features (Close, Volume, SMA)
 target: Close                # Target feature for prediction (Bitcoin Close prices)
 freq: d                      # Daily frequency for time-series data
 checkpoints: './checkpoints/' # Directory to save model checkpoints
+frequency_map: 1
 
 
 ## Data loader section for M4 Daily
@@ -43,7 +44,7 @@ anomaly_ratio: 0.25
 # model define
 top_k: 5
 num_kernels: 6
-enc_in: 3 # Number of input features (1 for m4)
+enc_in: 2 # Number of input features (1 for m4)
 dec_in: 1 # Number of input features (1 for m4)
 c_out: 1 # Number of output features (1 for m4)
 d_model: 128
@@ -67,7 +68,7 @@ batch_size: 128
 patience: 400
 learning_rate: 0.0005
 des: Exp
-loss: SMAPE
+loss: MSE
 lradj: CARD
 use_amp: False
 

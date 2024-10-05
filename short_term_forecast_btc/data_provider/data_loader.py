@@ -293,9 +293,11 @@ class Dataset_Custom(Dataset):
 
 class BTC_Dataset(Dataset):
     def __init__(self, root_path, flag='train', size=None,
-                 features=['Price', 'Change', 'SMA'], data_path='btc_data.csv',
+                 features=None, data_path='btc_data.csv',
                  target='Price', scale=False, inverse=False, timeenc=0):
         # size [seq_len, label_len, pred_len]
+        if features is None:
+            features = ['Price', 'Volume']
         if size is None:
             size = [96, 48, 20]  # Default values for seq_len, label_len, pred_len
         self.seq_len = size[0]
@@ -320,6 +322,9 @@ class BTC_Dataset(Dataset):
 
         # Select relevant features for training (Price, Change, SMA)
         self.data = df[self.features].values  # Store the features as a numpy array
+
+        # Initialize timeseries for the BTC data
+        self.timeseries = [self.data]  # We have a single timeseries for BTC
 
     def __getitem__(self, index):
         # Initialize insample and outsample arrays based on multivariate features
@@ -352,7 +357,7 @@ class BTC_Dataset(Dataset):
         return insample, outsample, insample_mask, outsample_mask
 
     def __len__(self):
-        # Return the length of the dataset minus the sequence and prediction length
+        # In the case of BTC, we only have one time series, so return its length
         return len(self.data) - self.seq_len - self.pred_len
 
     def last_insample_window(self):
@@ -360,9 +365,19 @@ class BTC_Dataset(Dataset):
         Return the last insample window for prediction (for the final evaluation).
         """
         insample = np.zeros((1, self.seq_len, len(self.features)))  # Adjusted for multivariate features
-        insample_window = self.data[-self.seq_len:]  # Last window of data
-        insample[0, :, :] = insample_window  # Fill insample with the last sequence
-        return insample
+        insample_mask = np.zeros((1, self.seq_len))  # Univariate mask for the insample window
+
+        # Get the last insample window from the data
+        insample_window = self.timeseries[0][-self.seq_len:]  # BTC is a single time series
+
+        # Fill the insample array with the last window of data
+        insample[0, :, :] = insample_window  # Multivariate input
+
+        # Set the mask for the insample window to indicate valid data points
+        insample_mask[0, -len(insample_window):] = 1.0
+
+        # Return the insample window and the mask
+        return insample, insample_mask
 
 
 class Dataset_M4(Dataset):
