@@ -2,7 +2,7 @@ import argparse
 import os
 import torch
 import yaml
-from exp.exp_long_term_forecasting import Exp_Long_Term_Forecast
+from exp.exp_main import Exp_Main
 import random
 import numpy as np
 
@@ -59,14 +59,14 @@ if __name__ == '__main__':
     print(args)
 
     # Set the experiment class for long-term forecasting
-    Exp = Exp_Long_Term_Forecast
+    Exp = Exp_Main
 
     # Training loop
     if args.is_training:
         for ii in range(args.itr):
             setting = '{}_{}_{}_ft{}_sl{}_ll{}_pl{}_dm{}_nh{}_el{}_dl{}_df{}_fc{}_eb{}_dt{}_{}'.format(
                 args.model_id, args.model, args.data, args.features, args.seq_len, args.label_len, args.pred_len,
-                args.d_model, args.n_heads, args.e_layers, args.d_layers, args.d_ff, args.factor, args.embed,
+                args.d_model, args.n_heads, args.e_layers, args.d_ff, args.factor, args.embed,
                 args.distil, args.des, ii)
 
             exp = Exp(args)
