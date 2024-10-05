@@ -126,9 +126,11 @@ class Exp_Main(Exp_Basic):
         model_optim = self._select_optimizer()
         criterion = self._select_criterion()
 
-
+        # Start with MSELoss with reduction='mean' to avoid the tensor issue and check performance.
+        # If you notice that outliers are a problem, or the MSE loss is too aggressive for your data,
+        # switch to HuberLoss for a smoother error treatment.
         # c = nn.L1Loss()
-        c = nn.MSELoss(reduction = 'none')
+        c = nn.MSELoss(reduction = 'mean')
         # c = torch.nn.HuberLoss(reduction = 'none')
         
         self.warmup_epochs = self.args.warmup_epochs
