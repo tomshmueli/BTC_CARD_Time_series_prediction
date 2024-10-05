@@ -37,6 +37,7 @@ class Exp_Main(Exp_Basic):
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
+        self.device = 'cuda' if self.args.use_gpu and torch.cuda.is_available() else 'cpu'
         if self.args.use_multi_gpu and self.args.use_gpu:
             model = nn.DataParallel(model, device_ids=self.args.device_ids)
         return model
@@ -92,9 +93,8 @@ class Exp_Main(Exp_Basic):
 
 
                 if self.args.model == 'CARD' and not is_test:
-                    
                     self.ratio = np.array([max(1/np.sqrt(i+1),0.0) for i in range(self.args.pred_len)])
-                    self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to('cuda')
+                    self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to(self.device)
                     pred = outputs*self.ratio
                     true = batch_y*self.ratio
                     # loss = torch.mean(criterion(pred, true)) 
@@ -127,8 +127,8 @@ class Exp_Main(Exp_Basic):
         criterion = self._select_criterion()
 
 
-        c = nn.L1Loss()
-        # c = nn.MSELoss(reduction = 'none')
+        # c = nn.L1Loss()
+        c = nn.MSELoss(reduction = 'none')
         # c = torch.nn.HuberLoss(reduction = 'none')
         
         self.warmup_epochs = self.args.warmup_epochs
@@ -170,8 +170,6 @@ class Exp_Main(Exp_Basic):
                 adjust_learning_rate_new(model_optim, epoch+1, self.args)
             elif self.args.lradj == 'constant':
                 pass
-            else:
-                adjust_learning_rate(model_optim, epoch = epoch + 1, args = self.args)
 
 
             self.model.train()
@@ -222,7 +220,7 @@ class Exp_Main(Exp_Basic):
 
                     if self.args.model == 'CARD':
                         self.ratio = np.array([max(1/np.sqrt(i+1),0.0) for i in range(self.args.pred_len)])
-                        self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to('cuda')
+                        self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to(self.device)
                         outputs = outputs * self.ratio
                         batch_y = batch_y * self.ratio
 

@@ -6,8 +6,10 @@ from exp.exp_main import Exp_Main
 import random
 import numpy as np
 
+CONFIG_PATH = 'config.yaml'
 
-def load_config_from_file(config_path="config.yaml"):
+
+def load_config_from_file(config_path=CONFIG_PATH):
     """Load hyperparameters from a YAML configuration file."""
     with open(config_path, "r") as file:
         config = yaml.safe_load(file)

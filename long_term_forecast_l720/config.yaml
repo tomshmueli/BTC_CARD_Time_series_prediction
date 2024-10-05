@@ -1,21 +1,14 @@
-# ETT sanity check option (uncomment to run ETT data instead)
-root_path: './dataset/'
-data_path: 'ETTh1.csv'
-data: ETTh1
-features: M
-
 # Task settings
 task_name: long_term_forecast
 is_training: 1
 model_id: btc_daily_long
 model: CARD
 
-## Data loader section
-#data: btc
-#root_path: './dataset/btc/'
-#data_path: 'btc_train.csv'
-#test_data_path: 'btc_test.csv'
-#features: ['Price', 'Volume']
+# Data loader section
+data: btc
+root_path: './dataset/'
+data_path: 'btc.csv'
+features: 'MS' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
 target: Price
 freq: d
 checkpoints: './checkpoints/'
@@ -64,7 +57,7 @@ patience: 100
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
 loss: 'mse'
-lradj: 'type3'
+lradj: 'CARD'
 pct_start: 0.3
 use_amp: False
 
