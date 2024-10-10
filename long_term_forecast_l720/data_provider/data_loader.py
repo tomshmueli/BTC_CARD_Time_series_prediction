@@ -30,9 +30,9 @@ class BTC_Dataset(Dataset):
         """
         # size [seq_len, label_len, pred_len]
         if size is None:
-            self.seq_len = 24*4*4
-            self.label_len = 24*4
-            self.pred_len = 24*4
+            self.seq_len = 24 * 4 * 4
+            self.label_len = 24 * 4
+            self.pred_len = 24 * 4
         else:
             self.seq_len = size[0]
             self.label_len = size[1]
@@ -88,13 +88,13 @@ class BTC_Dataset(Dataset):
         # Process time features
         df_stamp = df_raw[['date']][border1:border2]
         df_stamp['date'] = pd.to_datetime(df_stamp.date)
-        if self.timeenc == 0:
+        if self.timeenc == 0:  # No time encoding
             df_stamp['month'] = df_stamp.date.apply(lambda row: row.month, 1)
             df_stamp['day'] = df_stamp.date.apply(lambda row: row.day, 1)
             df_stamp['weekday'] = df_stamp.date.apply(lambda row: row.weekday(), 1)
             df_stamp['hour'] = df_stamp.date.apply(lambda row: row.hour, 1)
             data_stamp = df_stamp.drop(['date'], 1).values
-        elif self.timeenc == 1:
+        elif self.timeenc == 1:  # Time encoding
             data_stamp = time_features(pd.to_datetime(df_stamp['date'].values), freq=self.freq)
             data_stamp = data_stamp.transpose(1, 0)
 
@@ -130,6 +130,7 @@ class BTC_Dataset(Dataset):
         Inverse the scaling applied to the data.
         """
         return self.scaler.inverse_transform(data)
+
 
 class Dataset_ETT_hour(Dataset):
     def __init__(self, root_path, flag='train', size=None,
@@ -408,7 +409,7 @@ class Dataset_Custom(Dataset):
 
     def inverse_transform(self, data):
         return self.scaler.inverse_transform(data)
-    
+
 
 class Dataset_Pred(Dataset):
     def __init__(self, root_path, flag='pred', size=None,
