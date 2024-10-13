@@ -7,7 +7,7 @@ model: CARD
 # Data loader section
 data: btc
 root_path: './dataset/'
-data_path: 'btc_hourly_no_volume.csv'
+data_path: 'btc_hourly.csv'
 features: 'MS' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
 target: Price
 freq: h
