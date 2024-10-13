@@ -1,9 +1,7 @@
 import os
-
 import numpy as np
 import pandas as pd
 import matplotlib.pyplot as plt
-import yaml
 from data_provider.data_loader import BTC_Dataset  # Import your dataset class
 from run import load_config_from_file
 
@@ -12,7 +10,6 @@ config = load_config_from_file()
 PRED_NAME = 'pred_s_hourly'  # Name of the prediction file to load
 
 # Step 2: Initialize BTC_Dataset and load data using parameters from config
-# Since we're now working with only 'Price', the 'features' is 'S'
 btc_dataset = BTC_Dataset(
     root_path=config['root_path'],
     data_path=config['data_path'],
@@ -26,40 +23,40 @@ btc_dataset = BTC_Dataset(
 # Step 3: Read data and fit scaler (scaling only the 'Price' column now)
 btc_dataset.__read_data__()
 
-# Step 4: Load the predicted data from the .npy file (use proper config key for results path)
+# Step 4: Load predictions from the .npy file (predictions on the test set)
 predictions = np.load(f"results/npy_results/{PRED_NAME}.npy")
+predictions_flat = predictions.reshape(-1, 1)  # Flatten predictions
 
-# Step 5: Flatten the predictions (since it's (640, 30, 1), we flatten it to a 1D array)
-predictions_flat = predictions.reshape(-1, 1)
+# Step 5: Inverse transform predictions back to original scale
+predictions_rescaled = btc_dataset.inverse_transform(predictions_flat).flatten()
 
-# Step 6: Inverse transform the predictions directly (only 'Price' is scaled now)
-# Now we only need to inverse transform the 'Price' column (single column scaling)
-predictions_rescaled = btc_dataset.inverse_transform(predictions_flat)
-
-# Step 7: Flatten the rescaled predictions again for plotting
-predictions_rescaled_flat = predictions_rescaled.flatten()
-
-# Step 8: Load actual prices from CSV and slice to match prediction length
+# Step 6: Load actual prices and dates from CSV
 actual_prices = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['Price']
-actual_prices_trimmed = actual_prices[len(actual_prices) - len(predictions_rescaled_flat):]
+dates = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['date']  # Assuming a 'date' column
 
-# Step 8.5: Slice the predicted prices to match the length of actual prices
-predictions_rescaled_flat = predictions_rescaled_flat[:len(actual_prices_trimmed)]  # Slice the predictions
+# Step 7: Adjust for the test portion (last 10% of data)
+num_test = int(len(actual_prices) * 0.2)  # Adjust for your test split (10%)
+test_prices = actual_prices[-num_test:]  # Extract test prices
+test_dates = dates[-num_test:]  # Extract test dates
 
-# Step 9: Plotting actual vs predicted prices
-plt.plot(actual_prices_trimmed, label='Actual Prices', color='blue')
-plt.plot(predictions_rescaled_flat, label='Predicted Prices', color='red')
+# Step 8: Plot actual test prices and predictions
+plt.figure(figsize=(10, 6))
+plt.plot(test_dates, test_prices, label='Actual Prices', color='blue')
+plt.plot(test_dates, predictions_rescaled[:num_test], label='Predicted Prices', color='red')
 
-# Add labels and legend
-plt.xlabel('Time Steps')
+# Step 9: Configure plot with dates
+plt.xlabel('Date')
 plt.ylabel('Bitcoin Price')
-plt.title('Actual vs Predicted Bitcoin Prices')
+plt.title('Actual vs Predicted Bitcoin Prices (Test Data)')
+plt.xticks(test_dates[::300], rotation=45)  # Adjust the step size for dates based on your data
 plt.legend()
+# Adjust layout to prevent the date labels from being cut off
+plt.tight_layout()
 
 # Save the plot as a file (e.g., PNG)
 if not os.path.exists("Price_Prediction"):
     os.mkdir("Price_Prediction")
-plt.savefig(f"Price_Prediction/bitcoin_prediction_plot_single_feature_{PRED_NAME}.png")  # Saves the plot in the current directory as a PNG file
+plt.savefig(f"Price_Prediction/bitcoin_prediction_plot_single_feature_{PRED_NAME}.png")
 
 # Optionally, you can also display it if needed
 plt.show()
