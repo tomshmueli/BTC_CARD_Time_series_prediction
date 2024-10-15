@@ -1,16 +1,16 @@
 # Task settings
-task_name: hourly_btc_default
+task_name: btc_default
 is_training: 1
-model_id: btc_hourly
+model_id: daily_S
 model: CARD
 
 # Data loader section
 data: btc
 root_path: './dataset/'
-data_path: 'btc_hourly.csv'
+data_path: 'btc_daily.csv'
 features: 'MS' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
 target: Price
-freq: h
+freq: d
 checkpoints: './checkpoints/'
 
 # Forecasting parameters
@@ -51,8 +51,8 @@ output_attention: False
 # Optimization settings
 num_workers: 10
 itr: 1
-train_epochs: 30
-batch_size: 128
+train_epochs: 15
+batch_size: 64
 patience: 10
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
