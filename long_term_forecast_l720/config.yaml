@@ -7,8 +7,8 @@ model: CARD
 # Data loader section
 data: btc
 root_path: './dataset/'
-data_path: 'btc_daily.csv'
-features: 'MS' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
+data_path: 'btc_daily_S.csv'
+features: 'S' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
 target: Price
 freq: d
 checkpoints: './checkpoints/'
