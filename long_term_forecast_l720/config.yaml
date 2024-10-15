@@ -52,7 +52,7 @@ output_attention: False
 num_workers: 10
 itr: 1
 train_epochs: 15
-batch_size: 64
+batch_size: 16 # 16 did the best job for daily data
 patience: 10
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
