@@ -273,10 +273,16 @@ class Exp_Main(Exp_Basic):
 
     def test(self, setting, test=0):
         test_data, test_loader = self._get_data(flag='test')
-        
+
         if test:
             print('loading model')
-            self.model.load_state_dict(torch.load(os.path.join('./checkpoints/' + setting, 'checkpoint.pth')))
+            checkpoint_path = os.path.join('./checkpoints/' + setting, 'checkpoint.pth')
+
+            # Check if a GPU is available, and set the map_location accordingly
+            if torch.cuda.is_available():
+                self.model.load_state_dict(torch.load(checkpoint_path))  # Load directly to GPU
+            else:
+                self.model.load_state_dict(torch.load(checkpoint_path, map_location=torch.device('cpu')))  # Load to CPU
 
         preds = []
         trues = []
