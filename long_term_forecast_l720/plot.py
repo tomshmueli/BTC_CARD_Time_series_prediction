@@ -1,5 +1,5 @@
-import os
 import numpy as np
+import os
 import pandas as pd
 import matplotlib.pyplot as plt
 from data_provider.data_loader import BTC_Dataset  # Import your dataset class
@@ -7,7 +7,7 @@ from run import load_config_from_file
 
 # Step 1: Load configuration from YAML
 config = load_config_from_file()
-PRED_NAME = 'pred'  # use the name of the pred.npy file you want to plot (inside results/npy_results/)
+PRED_NAME = 'hourly_500'  # Use the name of the pred.npy file you want to plot (inside results/npy_results/)
 
 # Step 2: Initialize BTC_Dataset and load data using parameters from config
 btc_dataset = BTC_Dataset(
@@ -20,44 +20,66 @@ btc_dataset = BTC_Dataset(
     freq=config['freq']  # Assuming this is the test set
 )
 
-# Step 3: Read data and fit scaler (scaling only the 'Price' column now)
+# Step 3: Read data and retrieve scaler parameters
 btc_dataset.__read_data__()
+scaler = btc_dataset.scaler  # Assuming scaler was fitted during data loading
 
 # Step 4: Load predictions from the .npy file (predictions on the test set)
 predictions = np.load(f"results/npy_results/{PRED_NAME}.npy")
-actual_size = predictions.shape[0]  # Get the actual size of the predictions
-predictions_flat = predictions.reshape(-1, 1)  # Flatten predictions
 
-# Step 5: Inverse transform predictions back to original scale
-if config.get('features') == 'MS':
-    # Create a dummy array with two columns for inverse transform (Price and Volume)
-    dummy_input = np.zeros((predictions_flat.shape[0], 2))
-    dummy_input[:, 0] = predictions_flat.flatten()  # Fill the first column with predicted 'Price'
+# Step 5: Calculate prediction range (mean, upper, lower bounds)
+test_size, pred_len, _ = predictions.shape  # Get shape: (testset size, pred_len, #features)
 
-    # Inverse transform using the StandardScaler (applies only to Price)
-    predictions_rescaled = btc_dataset.inverse_transform(dummy_input)[:, 0]  # Extract only the Price column
-else:
-    # If 'S' (single feature), directly inverse transform
-    predictions_rescaled = btc_dataset.inverse_transform(predictions_flat).flatten()
+# Initialize lists to store the prediction range
+mean_predictions = np.zeros(test_size)
+upper_bound = np.zeros(test_size)
+lower_bound = np.zeros(test_size)
 
-# Step 6: Load actual prices and dates from CSV
-actual_prices = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['Price']
-dates = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['date']  # Assuming a 'date' column
+# Calculate mean, upper, and lower bounds
+for i in range(test_size):
+    daily_predictions = []
+    for j in range(pred_len):
+        if i + j < test_size:
+            daily_predictions.append(predictions[i, j, 0])
 
-# Step 7: Adjust for the test portion (last 10% of data)
-num_test = actual_size  # Adjust for your test split (20%)
-test_prices = actual_prices[-num_test:]  # Extract test prices
-test_dates = dates[-num_test:]  # Extract test dates
+    daily_predictions = np.array(daily_predictions)
+    mean_predictions[i] = np.mean(daily_predictions)
+    upper_bound[i] = np.max(daily_predictions)  # or use np.percentile(daily_predictions, 90)
+    lower_bound[i] = np.min(daily_predictions)  # or use np.percentile(daily_predictions, 10)
 
-# Step 8: Plot actual test prices and predictions
-plt.figure(figsize=(10, 6))
-plt.plot(test_dates, test_prices, label='Actual Prices', color='blue')
-plt.plot(test_dates, predictions_rescaled[:num_test], label='Predicted Prices', color='red')
+# Step 6: Manually apply inverse scaling (assuming scaler has mean_ and var_)
+mean = scaler.mean_[0]  # Get the mean from the scaler (for Price)
+std_dev = np.sqrt(scaler.var_[0])  # Get the standard deviation (for Price)
 
-# Step 9: Configure plot with dates
+# Inverse scaling for mean, upper, and lower bounds
+mean_predictions_rescaled = (mean_predictions * std_dev) + mean
+upper_bound_rescaled = (upper_bound * std_dev) + mean
+lower_bound_rescaled = (lower_bound * std_dev) + mean
+
+try:
+    # Step 7: Load actual prices and dates from CSV
+    actual_prices = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['Price']
+    dates = pd.read_csv(f"{config['root_path']}/{config['data_path']}")['date']  # Assuming a 'date' column
+
+    # Step 8: Adjust for the test portion (last 10% of data)
+    num_test = test_size  # Adjust for your test split (20%)
+    test_prices = actual_prices[-num_test:]  # Extract test prices
+    test_dates = dates[-num_test:]  # Extract test dates
+
+    # Step 9: Plot actual test prices and prediction bands (mean, upper, lower)
+    plt.figure(figsize=(10, 6))
+    plt.plot(test_dates, test_prices, label='Actual Prices', color='blue')
+    plt.plot(test_dates, mean_predictions_rescaled, label='Mean Predicted Prices', color='red')
+    plt.fill_between(test_dates, lower_bound_rescaled, upper_bound_rescaled, color='gray', alpha=0.3, label='Prediction Range')
+
+except Exception as e:
+    print(f"Error: {e}")
+    print("Make sure to load from config correct dataset! hourly/daily")
+
+# Step 10: Configure plot with dates
 plt.xlabel('Date')
 plt.ylabel('Bitcoin Price')
-plt.title(f'Actual vs Predicted Bitcoin Prices (Test Data) - {PRED_NAME}')
+plt.title(f'Actual vs Predicted Bitcoin Prices with Prediction Range (Test Data) - {PRED_NAME}')
 plt.xticks(test_dates[::300], rotation=45)  # Adjust the step size for dates based on your data
 plt.legend()
 plt.tight_layout()
@@ -65,7 +87,7 @@ plt.tight_layout()
 # Save the plot as a file (e.g., PNG)
 if not os.path.exists("Price_Prediction"):
     os.mkdir("Price_Prediction")
-plt.savefig(f"Price_Prediction/bitcoin_prediction_plot_{PRED_NAME}.png")
+plt.savefig(f"Price_Prediction/{PRED_NAME}_bitcoin_prediction_plot_range.png")
 
 # Optionally, you can also display it if needed
 plt.show()
