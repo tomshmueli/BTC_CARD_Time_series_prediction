@@ -92,25 +92,26 @@ class StandardScaler():
         return (data * self.std) + self.mean
 
 
-def visual(true, preds=None, dates=None, name='./pic/test.pdf'):
+def visual(dates, true, preds=None, name='./pic/test.pdf'):
     """
     Results visualization with dates on the x-axis.
     """
+    config = load_config_from_file()
     plt.figure()
 
-    # Plot actual values against dates
-    if dates is not None:
+    # Plot sequence + pred len on the x-axis
+    if config['show_date']:
+        plt.plot(true, label='GroundTruth', linewidth=2)
+        if preds is not None:
+            plt.plot(preds, label='Prediction', linewidth=2)
+    else:  # Plot dates on the x-axis
         plt.plot(dates, true, label='GroundTruth', linewidth=2)
         if preds is not None:
             plt.plot(dates, preds, label='Prediction', linewidth=2)
 
-        # Print the first and last day from the dates array
-        print(f"First date: {dates[0]}")
-        print(f"Last date: {dates[-1]}")
-    else:
-        plt.plot(true, label='GroundTruth', linewidth=2)
-        if preds is not None:
-            plt.plot(preds, label='Prediction', linewidth=2)
+    # Print the first and last day from the dates array
+    print(f"First date: {dates[0]}")
+    print(f"Last date: {dates[-1]}")
 
     plt.xticks(rotation=45)
     plt.legend()

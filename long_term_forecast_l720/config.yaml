@@ -1,11 +1,12 @@
 # Task settings
 task_name: btc_default
-is_training: 1
-model_id: daily_short
+is_training: 0 # 0 for Testing only , 1 for training
+model_id: daily_short_no_timeF
 model: CARD
 
 #Plotitng settings
 pred_file_name: 'daily_short'
+show_date: False # Show date on x-axis in visual function
 
 # Data loader section
 data: btc
@@ -47,7 +48,7 @@ moving_avg: 25
 factor: 1  # Attention factor for scaling
 distil: True
 dropout: 0.3
-embed: 'timeF'
+embed: 0 # 'timeF'
 activation: 'gelu'
 output_attention: False
 
@@ -55,7 +56,7 @@ output_attention: False
 num_workers: 10
 itr: 1
 train_epochs: 10
-batch_size: 128 # 16 did the best job for daily data
+batch_size: 16 # 16 did the best job for daily data
 patience: 3
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
