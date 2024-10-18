@@ -92,33 +92,28 @@ class StandardScaler():
         return (data * self.std) + self.mean
 
 
-def visual(true, preds=None, name='./pic/test.pdf'):
+def visual(true, preds=None, dates=None, name='./pic/test.pdf'):
     """
-    Results visualization
+    Results visualization with dates on the x-axis.
     """
-    test_dates = pd.read_csv("dataset/check.csv")['date']  # Load test dates
-    dates = test_dates[:len(true)]
     plt.figure()
 
-    # Plot the actual ground truth
-    plt.plot(dates, true, label='GroundTruth', linewidth=2)
+    # Plot actual values against dates
+    if dates is not None:
+        plt.plot(dates, true, label='GroundTruth', linewidth=2)
+        if preds is not None:
+            plt.plot(dates, preds, label='Prediction', linewidth=2)
 
-    # Plot predictions if available
-    if preds is not None:
-        plt.plot(dates, preds, label='Prediction', linewidth=2)
+        # Print the first and last day from the dates array
+        print(f"First date: {dates[0]}")
+        print(f"Last date: {dates[-1]}")
+    else:
+        plt.plot(true, label='GroundTruth', linewidth=2)
+        if preds is not None:
+            plt.plot(preds, label='Prediction', linewidth=2)
 
-    # Label formatting
-    plt.xlabel('Date')
-    plt.ylabel('Value')  # You can change this depending on the y-axis label, e.g., 'Bitcoin Price'
-    plt.legend()
-
-    # Rotate the date labels if needed for readability
     plt.xticks(rotation=45)
-
-    # Print the starting date of the predictions
-    print(f"Starting date of the predictions: {dates[0]}")  # This will show the starting date of the predictions
-
-    # Save the plot as a PDF
+    plt.legend()
     plt.savefig(name, bbox_inches='tight')
 
 

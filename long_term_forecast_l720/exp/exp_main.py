@@ -9,7 +9,7 @@ import numpy as np
 import torch
 import torch.nn as nn
 from torch import optim
-from torch.optim import lr_scheduler 
+from torch.optim import lr_scheduler
 
 import os
 import time
@@ -19,6 +19,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 warnings.filterwarnings('ignore')
+
 
 class Exp_Main(Exp_Basic):
     def __init__(self, args):
@@ -33,7 +34,7 @@ class Exp_Main(Exp_Basic):
             'NLinear': NLinear,
             'Linear': Linear,
             'PatchTST': PatchTST,
-            'CARD':CARD,
+            'CARD': CARD,
         }
         model = model_dict[self.args.model].Model(self.args).float()
 
@@ -54,7 +55,7 @@ class Exp_Main(Exp_Basic):
         criterion = nn.MSELoss()
         return criterion
 
-    def vali(self, vali_data, vali_loader, criterion,is_test = True):
+    def vali(self, vali_data, vali_loader, criterion, is_test=True):
         total_loss = []
         self.model.eval()
         with torch.no_grad():
@@ -90,17 +91,15 @@ class Exp_Main(Exp_Basic):
                 outputs = outputs[:, -self.args.pred_len:, f_dim:]
                 batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
-
-
                 if self.args.model == 'CARD' and not is_test:
-                    self.ratio = np.array([max(1/np.sqrt(i+1),0.0) for i in range(self.args.pred_len)])
+                    self.ratio = np.array([max(1 / np.sqrt(i + 1), 0.0) for i in range(self.args.pred_len)])
                     self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to(self.device)
-                    pred = outputs*self.ratio
-                    true = batch_y*self.ratio
+                    pred = outputs * self.ratio
+                    true = batch_y * self.ratio
                     # loss = torch.mean(criterion(pred, true)) 
                 else:
-                    pred = outputs#.detach().cpu()
-                    true = batch_y#.detach().cpu()
+                    pred = outputs  #.detach().cpu()
+                    true = batch_y  #.detach().cpu()
 
                 loss = criterion(pred, true)
 
@@ -130,9 +129,9 @@ class Exp_Main(Exp_Basic):
         # If you notice that outliers are a problem, or the MSE loss is too aggressive for your data,
         # switch to HuberLoss for a smoother error treatment.
         # c = nn.L1Loss()
-        c = nn.MSELoss(reduction = 'mean')
+        c = nn.MSELoss(reduction='mean')
         # c = torch.nn.HuberLoss(reduction = 'none')
-        
+
         self.warmup_epochs = self.args.warmup_epochs
         import math
 
@@ -140,11 +139,12 @@ class Exp_Main(Exp_Basic):
             """Decay the learning rate with half-cycle cosine after warmup"""
             min_lr = 0
             if epoch < self.warmup_epochs:
-                lr = self.args.learning_rate * epoch / self.warmup_epochs 
+                lr = self.args.learning_rate * epoch / self.warmup_epochs
             else:
-                lr = min_lr+ (self.args.learning_rate - min_lr) * 0.5 * \
-                    (1. + math.cos(math.pi * (epoch - self.warmup_epochs) / (self.args.train_epochs - self.warmup_epochs)))
-                
+                lr = min_lr + (self.args.learning_rate - min_lr) * 0.5 * \
+                     (1. + math.cos(
+                         math.pi * (epoch - self.warmup_epochs) / (self.args.train_epochs - self.warmup_epochs)))
+
             for param_group in optimizer.param_groups:
                 if "lr_scale" in param_group:
                     param_group["lr"] = lr * param_group["lr_scale"]
@@ -152,15 +152,15 @@ class Exp_Main(Exp_Basic):
                     param_group["lr"] = lr
             print(f'Updating learning rate to {lr:.7f}')
             return lr
-        
+
         for epoch in range(self.args.train_epochs):
             iter_count = 0
             train_loss = []
-                
-#             if self.args.lradj == 'CARD':
-#                 adjust_learning_rate_new(model_optim, epoch+1, self.args)
-#             else:
-#                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
+
+            #             if self.args.lradj == 'CARD':
+            #                 adjust_learning_rate_new(model_optim, epoch+1, self.args)
+            #             else:
+            #                 adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args)
             # mae = 0
             # if epoch < self.warmup_epochs:
             #     mae = -1#0.1
@@ -169,10 +169,9 @@ class Exp_Main(Exp_Basic):
             # else:
             #     mae = -1
             if self.args.lradj == 'CARD':
-                adjust_learning_rate_new(model_optim, epoch+1, self.args)
+                adjust_learning_rate_new(model_optim, epoch + 1, self.args)
             elif self.args.lradj == 'constant':
                 pass
-
 
             self.model.train()
             epoch_time = time.time()
@@ -207,11 +206,11 @@ class Exp_Main(Exp_Basic):
                         train_loss.append(loss.item())
                 else:
                     if 'Linear' in self.args.model or 'TST' in self.args.model:
-                            outputs = self.model(batch_x)
+                        outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
-                            
+
                         else:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark, batch_y)
                     # print(outputs.shape,batch_y.shape)
@@ -219,9 +218,8 @@ class Exp_Main(Exp_Basic):
                     outputs = outputs[:, -self.args.pred_len:, f_dim:]
                     batch_y = batch_y[:, -self.args.pred_len:, f_dim:].to(self.device)
 
-
                     if self.args.model == 'CARD':
-                        self.ratio = np.array([max(1/np.sqrt(i+1),0.0) for i in range(self.args.pred_len)])
+                        self.ratio = np.array([max(1 / np.sqrt(i + 1), 0.0) for i in range(self.args.pred_len)])
                         self.ratio = torch.tensor(self.ratio).unsqueeze(-1).to(self.device)
                         outputs = outputs * self.ratio
                         batch_y = batch_y * self.ratio
@@ -244,14 +242,14 @@ class Exp_Main(Exp_Basic):
                 else:
                     loss.backward()
                     model_optim.step()
-                    
+
                 # if self.args.lradj == 'TST':
                 #     adjust_learning_rate(model_optim, scheduler, epoch + 1, self.args, printout=False)
                 #     scheduler.step()
 
             print("Epoch: {} cost time: {}".format(epoch + 1, time.time() - epoch_time))
             train_loss = np.average(train_loss)
-            vali_loss = self.vali(vali_data, vali_loader, c,is_test= False)
+            vali_loss = self.vali(vali_data, vali_loader, c, is_test=False)
             test_loss = self.vali(test_data, test_loader, criterion)
 
             print("Epoch: {0}, Steps: {1} | Train Loss: {2:.7f} Vali Loss: {3:.7f} Test Loss: {4:.7f}".format(
@@ -273,6 +271,7 @@ class Exp_Main(Exp_Basic):
 
     def test(self, setting, test=0):
         test_data, test_loader = self._get_data(flag='test')
+        real_dates = test_data.real_dates
 
         if test:
             print('loading model')
@@ -315,7 +314,7 @@ class Exp_Main(Exp_Basic):
                                 outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)
                 else:
                     if 'Linear' in self.args.model or 'TST' in self.args.model:
-                            outputs = self.model(batch_x)
+                        outputs = self.model(batch_x)
                     else:
                         if self.args.output_attention:
                             outputs = self.model(batch_x, batch_x_mark, dec_inp, batch_y_mark)[0]
@@ -336,11 +335,21 @@ class Exp_Main(Exp_Basic):
                 preds.append(pred)
                 trues.append(true)
                 inputx.append(batch_x.detach().cpu().numpy())
+
+                # Handle dates: Concatenate `batch_x_mark` and `batch_y_mark` to create a date array of `seq_len +
+                # pred_len` Convert batch_x_mark and batch_y_mark back to date format
+                seq_dates = real_dates[i * self.args.batch_size:(i * self.args.batch_size) + self.args.seq_len]
+                pred_dates = real_dates[(i * self.args.batch_size) +
+                                        self.args.seq_len:(i * self.args.batch_size) + self.args.seq_len + self.args.pred_len]
+
+                combined_dates = np.concatenate([seq_dates, pred_dates])
+
                 if i % 20 == 0:
                     input = batch_x.detach().cpu().numpy()
                     gt = np.concatenate((input[0, :, -1], true[0, :, -1]), axis=0)
                     pd = np.concatenate((input[0, :, -1], pred[0, :, -1]), axis=0)
-                    visual(gt, pd, os.path.join(folder_path, str(i) + '.pdf'))
+
+                    visual(gt, pd, combined_dates, os.path.join(folder_path, str(i) + '.pdf'))
 
         preds = np.array(preds)
         trues = np.array(trues)
@@ -389,7 +398,8 @@ class Exp_Main(Exp_Basic):
                 batch_y_mark = batch_y_mark.float().to(self.device)
 
                 # decoder input
-                dec_inp = torch.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[2]]).float().to(batch_y.device)
+                dec_inp = torch.zeros([batch_y.shape[0], self.args.pred_len, batch_y.shape[2]]).float().to(
+                    batch_y.device)
                 dec_inp = torch.cat([batch_y[:, :self.args.label_len, :], dec_inp], dim=1).float().to(self.device)
                 # encoder - decoder
                 if self.args.use_amp:
