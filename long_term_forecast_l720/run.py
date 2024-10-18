@@ -1,46 +1,18 @@
 import argparse
-import os
+import plot
 import torch
 import yaml
 from exp.exp_main import Exp_Main
 import random
 import numpy as np
-
-CONFIG_PATH = 'config.yaml'
-
-
-def load_config_from_file(config_path=CONFIG_PATH):
-    """Load hyperparameters from a YAML configuration file."""
-    with open(config_path, "r") as file:
-        config = yaml.safe_load(file)
-    return config
+from utils.tools import load_config_from_file
 
 
-if __name__ == '__main__':
-
-    parser = argparse.ArgumentParser(description='CARD Model for Long-Term Time Series Forecasting')
-
-    if len(os.sys.argv) > 1:
-        # (Argument parsing remains as is from the long-term script, keeping compatibility with CLI)
-        parser.add_argument('--is_training', type=int, required=True, default=1, help='status')
-        parser.add_argument('--model_id', type=str, required=True, default='test', help='model id')
-        parser.add_argument('--model', type=str, required=True, default='CARD',
-                            help='model name, options: [CARD]')
-        parser.add_argument('--data', type=str, required=True, default='ETTm1', help='dataset type')
-        parser.add_argument('--root_path', type=str, default='./data/ETT/', help='root path of the data file')
-        parser.add_argument('--data_path', type=str, default='ETTh1.csv', help='data file')
-        parser.add_argument('--features', type=str, default='M',
-                            help='forecasting task, options:[M, S, MS]; M:multivariate predict multivariate')
-        parser.add_argument('--seq_len', type=int, default=720, help='input sequence length')
-        parser.add_argument('--label_len', type=int, default=96, help='start token length')
-        parser.add_argument('--pred_len', type=int, default=96, help='prediction sequence length')
-        # Add other necessary args from the long-term script
-        args = parser.parse_args()
-
-    else:
-        # Load configuration from file if no args are provided
-        config = load_config_from_file()
-        args = argparse.Namespace(**config)
+def main_flow():
+    setting = None
+    # Load configuration from file if no args are provided
+    config = load_config_from_file()
+    args = argparse.Namespace(**config)
 
     # Seed setup
     fix_seed = args.random_seed
@@ -91,3 +63,11 @@ if __name__ == '__main__':
         print(f'>>>>>>>testing : {setting}<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<')
         exp.test(setting, test=1)
         torch.cuda.empty_cache()
+
+    return setting
+
+
+if __name__ == '__main__':
+    run_setting = main_flow()
+    plot.plot_flow(run_setting)
+    print('Done')

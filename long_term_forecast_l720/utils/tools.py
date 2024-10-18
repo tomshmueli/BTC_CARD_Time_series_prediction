@@ -1,7 +1,10 @@
 import numpy as np
+import pandas as pd
 import torch
 import matplotlib.pyplot as plt
 import time
+
+import yaml
 
 plt.switch_backend('agg')
 
@@ -20,16 +23,16 @@ def adjust_learning_rate(optimizer, scheduler, epoch, args, printout=True):
     elif args.lradj == 'constant':
         lr_adjust = {epoch: args.learning_rate}
     elif args.lradj == '3':
-        lr_adjust = {epoch: args.learning_rate if epoch < 10 else args.learning_rate*0.1}
+        lr_adjust = {epoch: args.learning_rate if epoch < 10 else args.learning_rate * 0.1}
     elif args.lradj == '4':
-        lr_adjust = {epoch: args.learning_rate if epoch < 15 else args.learning_rate*0.1}
+        lr_adjust = {epoch: args.learning_rate if epoch < 15 else args.learning_rate * 0.1}
     elif args.lradj == '5':
-        lr_adjust = {epoch: args.learning_rate if epoch < 25 else args.learning_rate*0.1}
+        lr_adjust = {epoch: args.learning_rate if epoch < 25 else args.learning_rate * 0.1}
     elif args.lradj == '6':
-        lr_adjust = {epoch: args.learning_rate if epoch < 5 else args.learning_rate*0.1}  
+        lr_adjust = {epoch: args.learning_rate if epoch < 5 else args.learning_rate * 0.1}
     elif args.lradj == 'TST':
         lr_adjust = {epoch: scheduler.get_last_lr()[0]}
-    
+
     if epoch in lr_adjust.keys():
         lr = lr_adjust[epoch]
         for param_group in optimizer.param_groups:
@@ -47,13 +50,13 @@ class EarlyStopping:
         self.val_loss_min = np.Inf
         self.delta = delta
 
-    def __call__(self, val_loss, model, path,delay = 0):
+    def __call__(self, val_loss, model, path, delay=0):
         score = -val_loss
         if self.best_score is None:
             self.best_score = score
             self.save_checkpoint(val_loss, model, path)
         elif score < self.best_score + self.delta:
-            if delay<=0:
+            if delay <= 0:
                 self.counter += 1
             print(f'EarlyStopping counter: {self.counter} out of {self.patience}')
             if self.counter >= self.patience:
@@ -93,14 +96,33 @@ def visual(true, preds=None, name='./pic/test.pdf'):
     """
     Results visualization
     """
+    test_dates = pd.read_csv("dataset/check.csv")['date']  # Load test dates
+    dates = test_dates[:len(true)]
     plt.figure()
-    plt.plot(true, label='GroundTruth', linewidth=2)
+
+    # Plot the actual ground truth
+    plt.plot(dates, true, label='GroundTruth', linewidth=2)
+
+    # Plot predictions if available
     if preds is not None:
-        plt.plot(preds, label='Prediction', linewidth=2)
+        plt.plot(dates, preds, label='Prediction', linewidth=2)
+
+    # Label formatting
+    plt.xlabel('Date')
+    plt.ylabel('Value')  # You can change this depending on the y-axis label, e.g., 'Bitcoin Price'
     plt.legend()
+
+    # Rotate the date labels if needed for readability
+    plt.xticks(rotation=45)
+
+    # Print the starting date of the predictions
+    print(f"Starting date of the predictions: {dates[0]}")  # This will show the starting date of the predictions
+
+    # Save the plot as a PDF
     plt.savefig(name, bbox_inches='tight')
 
-def test_params_flop(model,x_shape):
+
+def test_params_flop(model, x_shape):
     """
     If you want to thest former's flop, you need to give default value to inputs in model.forward(), the following code can only pass one argument to forward()
     """
@@ -108,10 +130,17 @@ def test_params_flop(model,x_shape):
     for parameter in model.parameters():
         model_params += parameter.numel()
         print('INFO: Trainable parameter count: {:.2f}M'.format(model_params / 1000000.0))
-    from ptflops import get_model_complexity_info    
+    from ptflops import get_model_complexity_info
     with torch.cuda.device(0):
         macs, params = get_model_complexity_info(model.cuda(), x_shape, as_strings=True, print_per_layer_stat=True)
         # print('Flops:' + flops)
         # print('Params:' + params)
         print('{:<30}  {:<8}'.format('Computational complexity: ', macs))
         print('{:<30}  {:<8}'.format('Number of parameters: ', params))
+
+
+def load_config_from_file(config_path='config.yaml'):
+    """Load hyperparameters from a YAML configuration file."""
+    with open(config_path, "r") as file:
+        config = yaml.safe_load(file)
+    return config

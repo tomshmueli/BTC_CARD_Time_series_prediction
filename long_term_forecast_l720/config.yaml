@@ -1,8 +1,11 @@
 # Task settings
 task_name: btc_default
 is_training: 1
-model_id: daily_S
+model_id: daily_short
 model: CARD
+
+#Plotitng settings
+pred_file_name: 'daily_short'
 
 # Data loader section
 data: btc
@@ -14,9 +17,9 @@ freq: d
 checkpoints: './checkpoints/'
 
 # Forecasting parameters
-seq_len: 336
-label_len: 30
-pred_len: 30
+seq_len: 50
+label_len: 10
+pred_len: 10
 
 # Model architecture
 fc_dropout: 0.05
@@ -32,12 +35,12 @@ kernel_size: 25
 individual: 0
 
 embed_type: 0
-enc_in: 2  # Adjust for BTC prediction (Price and Volume)
-dec_in: 2
-c_out: 2
+enc_in: 1  # Adjust for BTC prediction (Price and Volume)
+dec_in: 1
+c_out: 1
 d_model: 16
 n_heads: 8
-e_layers: 2
+e_layers: 1
 d_layers: 1
 d_ff: 32
 moving_avg: 25
@@ -51,9 +54,9 @@ output_attention: False
 # Optimization settings
 num_workers: 10
 itr: 1
-train_epochs: 15
-batch_size: 16 # 16 did the best job for daily data
-patience: 10
+train_epochs: 10
+batch_size: 128 # 16 did the best job for daily data
+patience: 3
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
 loss: 'mse'
