@@ -21,7 +21,12 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
     config = load_config_from_file()
 
     # Step 2: Check if we are provided with predictions or if we need to load from npy files
-    PRED_NAME = settings if settings is not None else config.get('pred_file_name')
+    if settings is None:
+        PRED_NAME = config.get('pred_file_name')
+    else:
+        cut = settings.find('CARD')
+        PRED_NAME = settings[:cut]
+
     if predictions is None:
         folder_path = f"results/{settings}/"
         predictions = np.load(f"{folder_path}pred.npy")
@@ -46,6 +51,8 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
 
     # Step 3: Calculate prediction range (mean, upper, lower bounds)
     test_size, pred_len, _ = predictions.shape
+    seq_len = btc_dataset.seq_len
+    pred_len = btc_dataset.pred_len
 
     # Initialize lists to store the prediction range
     mean_predictions = np.zeros(test_size)
@@ -80,10 +87,10 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
     first_predicted_prices_rescaled = (first_predicted_prices * std_dev) + mean  # Inverse scaling for first prices
 
     real_dates = btc_dataset.real_dates
-    num_test = test_size
 
     try:
-        test_dates = real_dates[-num_test:]
+        test_dates = real_dates[seq_len + pred_len - 1: - (
+                    pred_len - 1)]  # model skips first seq_len-1 dates and last pred_len-1 dates
 
         # Step 5: Handle true values if provided (inverse scale them if needed)
         if trues is not None:
@@ -122,7 +129,7 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
     # Step 7: Save the plot as a file
     if not os.path.exists("Price_Prediction"):
         os.mkdir("Price_Prediction")
-    plt.savefig(f"Price_Prediction/{PRED_NAME}_bitcoin_prediction_plot_range.png")
+    plt.savefig(f"Price_Prediction/{PRED_NAME}.png")
 
     # Optionally display the plot
     plt.show()
