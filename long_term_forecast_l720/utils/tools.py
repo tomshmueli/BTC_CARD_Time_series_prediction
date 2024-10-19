@@ -109,10 +109,6 @@ def visual(dates, true, preds=None, name='./pic/test.pdf'):
         if preds is not None:
             plt.plot(dates, preds, label='Prediction', linewidth=2)
 
-    # Print the first and last day from the dates array
-    print(f"First date: {dates[0]}")
-    print(f"Last date: {dates[-1]}")
-
     plt.xticks(rotation=45)
     plt.legend()
     plt.savefig(name, bbox_inches='tight')

@@ -69,5 +69,4 @@ def main_flow():
 
 if __name__ == '__main__':
     run_setting = main_flow()
-    plot.plot_flow(run_setting)
     print('Done')

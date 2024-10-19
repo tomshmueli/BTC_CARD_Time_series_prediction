@@ -7,6 +7,7 @@ model: CARD
 #Plotitng settings
 pred_file_name: 'daily_short'
 show_date: False # Show date on x-axis in visual function
+time_print_ticks: 100 # Number of ticks on x-axis in visual function
 
 # Data loader section
 data: btc
