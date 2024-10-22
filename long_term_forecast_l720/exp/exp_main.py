@@ -2,7 +2,7 @@ from models import CARD
 from data_provider.data_factory import data_provider
 from exp.exp_basic import Exp_Basic
 from models import Informer, Autoformer, Transformer, DLinear, Linear, NLinear, PatchTST
-from plot import plot_flow
+from plot import plot_flow, plot_predict
 from utils.tools import EarlyStopping, adjust_learning_rate, visual, test_params_flop
 from utils.metrics import metric
 
@@ -237,9 +237,9 @@ class Exp_Main(Exp_Basic):
                     time_now = time.time()
 
                 if self.args.use_amp:
-                    scaler.scale(loss).backward()
-                    scaler.step(model_optim)
-                    scaler.update()
+                    train_data.scaler.scale(loss).backward()
+                    train_data.scaler.step(model_optim)
+                    train_data.scaler.update()
                 else:
                     loss.backward()
                     model_optim.step()
@@ -390,7 +390,11 @@ class Exp_Main(Exp_Basic):
         if load:
             path = os.path.join(self.args.checkpoints, setting)
             best_model_path = path + '/' + 'checkpoint.pth'
-            self.model.load_state_dict(torch.load(best_model_path))
+            # Load the model with a fallback to CPU if GPU is not available
+            if torch.cuda.is_available():
+                self.model.load_state_dict(torch.load(best_model_path))
+            else:
+                self.model.load_state_dict(torch.load(best_model_path, map_location=torch.device('cpu')))
 
         preds = []
 
@@ -436,5 +440,7 @@ class Exp_Main(Exp_Basic):
             os.makedirs(folder_path)
 
         np.save(folder_path + 'real_prediction.npy', preds)
+
+        plot_predict(settings=setting, predictions=preds, pred_loader=pred_loader, btc_dataset=pred_data, scaler=pred_data.scaler)
 
         return

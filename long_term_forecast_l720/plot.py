@@ -90,7 +90,7 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
 
     try:
         test_dates = real_dates[seq_len + pred_len - 1: - (
-                    pred_len - 1)]  # model skips first seq_len-1 dates and last pred_len-1 dates
+                pred_len - 1)]  # model skips first seq_len-1 dates and last pred_len-1 dates
 
         # Step 5: Handle true values if provided (inverse scale them if needed)
         if trues is not None:
@@ -135,5 +135,107 @@ def plot_flow(settings=None, btc_dataset=None, predictions=None, scaler=None, tr
     plt.show()
 
 
-if __name__ == '__main__':
-    plot_flow(settings=None)  # Pass any settings if needed
+def plot_predict(settings=None, btc_dataset=None, predictions=None, scaler=None, pred_loader=None):
+    """
+    Function to plot future prediction results with real dates, including year, month, day, hour (if available),
+    and scaling if needed. Also calculates and plots Bollinger Bands and saves them to CSV.
+    """
+    # Step 1: Load configurations from config file
+    config = load_config_from_file()
+
+    # Step 2: Check if we are provided with predictions or if we need to load from npy files
+    if settings is None:
+        PRED_NAME = config.get('pred_file_name')
+    else:
+        cut = settings.find('CARD')
+        PRED_NAME = settings[:cut]
+
+    if predictions is None:
+        folder_path = f"results/{settings}/"
+        predictions = np.load(f"{folder_path}real_prediction.npy")
+
+    # If no btc_dataset is provided, load a new one
+    if btc_dataset is None:
+        btc_dataset = BTC_Dataset(
+            root_path=config['root_path'],
+            data_path=config['data_path'],
+            target=config['target'],
+            features=config.get('features'),
+            scale=config.get('rescale', 1) == 1,
+            timeenc=config['timeenc'],
+            freq=config['freq']
+        )
+        btc_dataset.__read_data__()
+
+    # If scaler is not passed, use the one from the btc_dataset
+    if scaler is None:
+        scaler = btc_dataset.scaler
+
+    # Step 3: Extract the last pred_len days from pred_loader.dataset.data_stamp
+    pred_len = predictions.shape[1]  # Assuming predictions shape is (test_size, pred_len, _)
+    data_stamp = pred_loader.dataset.data_stamp[-pred_len:, :]  # Last pred_len rows
+
+    # Step 4: Decode the future dates (assuming columns represent year, month, day, hour)
+    years = data_stamp[:, 0].astype(int)
+    months = data_stamp[:, 1].astype(int)
+    days = data_stamp[:, 2].astype(int)
+    hours = data_stamp[:, 3].astype(int) if data_stamp.shape[1] > 3 else [0] * len(years)  # Default to 0 if no hour info
+
+    # Create the list of future dates (format: YYYY-MM-DD HH)
+    future_dates = [f"{year:04d}-{month:02d}-{day:02d} {hour:02d}:00" for year, month, day, hour in zip(years, months, days, hours)]
+
+    # Step 5: Apply inverse scaling for predictions
+    mean = scaler.mean_[0]
+    std_dev = np.sqrt(scaler.var_[0])
+
+    # Step 6: Calculate Bollinger Bands (mean, upper, lower) based on predictions
+    mean_predictions = np.zeros(pred_len)
+
+    # Loop through the prediction length
+    for i in range(pred_len):
+        daily_predictions = predictions[:, i, 0]  # Get all the values for this prediction step
+        mean_predictions[i] = np.mean(daily_predictions)
+
+    # Apply inverse scaling to Bollinger Bands
+    mean_predictions_rescaled = (mean_predictions * std_dev) + mean
+
+    # Step 7: Check if future_dates and predictions have matching dimensions
+    if len(future_dates) != len(mean_predictions_rescaled):
+        print(
+            f"Mismatch: future_dates length = {len(future_dates)}, predictions length = {len(mean_predictions_rescaled)}")
+        return
+
+    # Step 8: Plot future predictions with Bollinger Bands
+    plt.figure(figsize=(10, 6))
+    plt.plot(future_dates, mean_predictions_rescaled, label='Predicted Prices (Mean)', color='red')
+
+    plt.xlabel('Date')
+    plt.ylabel('Bitcoin Price')
+    plt.title(f'Predicted Bitcoin Prices with Bollinger Bands (Future) - {PRED_NAME}')
+    plt.xticks(rotation=45)
+    plt.legend()
+    plt.tight_layout()
+
+    # Step 9: Save the plot as a file inside 'Price_Prediction/future/'
+    future_folder = "Price_Prediction/future"
+    if not os.path.exists(future_folder):
+        os.makedirs(future_folder)
+    plt.savefig(f"{future_folder}/{PRED_NAME}_future.png")
+
+    # Optionally display the plot
+    plt.show()
+
+    # Step 10: Save predictions, dates, and Bollinger Bands to CSV
+    df = pd.DataFrame({
+        'Date': future_dates,
+        'Predicted Price': mean_predictions_rescaled.flatten()
+    })
+
+    folder_path = './results/' + settings + '/'
+    if not os.path.exists(folder_path):
+        os.makedirs(folder_path)
+
+    df.to_csv(os.path.join(folder_path, 'future_predictions_with_bollinger_bands.csv'), index=False)
+    print(f"Predictions and Bollinger Bands saved to {folder_path}future_predictions.csv")
+
+    return

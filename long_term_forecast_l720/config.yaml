@@ -1,6 +1,7 @@
 # Task settings
 task_name: btc_default
 is_training: 0 # 0 for Testing only , 1 for training
+is_predicting: True # False for training / Testing , True for prediction
 model_id: daily_short_no_timeF
 model: CARD
 
