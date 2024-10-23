@@ -1,8 +1,8 @@
 # Task settings
 task_name: btc_default
-is_training: 0 # 0 for Testing only , 1 for training
-is_predicting: True # False for training / Testing , True for prediction
-model_id: daily_short_no_timeF
+is_training: 1 # 0 for Testing only , 1 for training
+is_predicting: False # False for training / Testing , True for prediction
+model_id: hourly_short_S
 model: CARD
 
 #Plotitng settings
@@ -13,16 +13,16 @@ time_print_ticks: 100 # Number of ticks on x-axis in visual function
 # Data loader section
 data: btc
 root_path: './dataset/'
-data_path: 'btc_daily_S.csv'
+data_path: 'btc_hourly_check.csv'
 features: 'S' # 'MS' multi (Price, volume etc') --> single (price) , 's' single --> single , 'M' multi --> multi
 target: Price
-freq: d
+freq: h
 checkpoints: './checkpoints/'
 
 # Forecasting parameters
-seq_len: 50
-label_len: 10
-pred_len: 10
+seq_len: 350
+label_len: 40
+pred_len: 40
 
 # Model architecture
 fc_dropout: 0.05
@@ -58,7 +58,7 @@ output_attention: False
 num_workers: 10
 itr: 1
 train_epochs: 10
-batch_size: 16 # 16 did the best job for daily data
+batch_size: 128 # 16 did the best job for daily data
 patience: 3
 learning_rate: 0.0001
 des: 'BTC Long-Term Forecasting'
